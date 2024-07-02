@@ -167,4 +167,4 @@ server.on('error', (e) => {
   console.log(time(), '[ERROR]', e)
 })
 
-server.listen(port, 'localhost', () => console.log(time(), 'server listening port', server.address().port))
+server.listen(port, '0.0.0.0', () => console.log(time(), 'server listening port', server.address().port))

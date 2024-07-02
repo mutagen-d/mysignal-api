@@ -23,3 +23,5 @@
   ```
 - open docs [localhost:8011/docs](http://localhost:8011/docs)
 
+  in authentication dialog entry `user` as user and `pass` as password
+
