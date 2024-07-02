@@ -6,6 +6,8 @@ const auth = require('basic-auth')
 const express = require('express')
 const { MysignalAdmin } = require('mysignal')
 const { performance } = require('perf_hooks')
+const swaggerUi = require('swagger-ui-express')
+const swaggerDocument = require('../msg-docs.json')
 
 const validateEnv = (env) => {
   const emptyVars = []
@@ -32,6 +34,38 @@ const validateEnv = (env) => {
 
 validateEnv(process.env)
 
+/**
+ * @param {*} value 
+ * @returns {boolean}
+ */
+const toBoolean = (value) => {
+  switch (typeof value) {
+    case 'boolean':
+      return value;
+    case 'string':
+      switch (value.toLowerCase()) {
+        case 'true':
+        case '1':
+        case 'yes':
+          return true;
+        case 'false':
+        case '0':
+        case 'no':
+          return false;
+      }
+      return undefined;
+    case 'number':
+      return Boolean(value)
+    case 'object':
+      if (value && value.value) {
+        return toBoolean(value.value)
+      }
+      return undefined;
+    default:
+      return value;
+  }
+}
+
 const admin = new MysignalAdmin();
 const readFileJson = (file) => {
   // const text = fs.readFileSync(path.join(__dirname, file), 'utf-8')
@@ -44,7 +78,18 @@ admin.initializeApp({
       .credential
       .cert(readFileJson(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)),
   },
-  huawei: readFileJson(process.env.HUAWEI_CONFIG_JSON),
+  huawei: {
+    retryConfig: {
+      maxDelayInMillis: 1000,
+      maxRetries: 0,
+      backOffFactor: 0.5,
+      statusCodes: [503],
+      ioErrorCodes: ['ETIMEDOUT']
+    },
+    authTimeout: 5 * 1000,
+    messagingTimeout: 5 * 1000,
+    ...readFileJson(process.env.HUAWEI_CONFIG_JSON),
+  },
 })
 
 const port = +process.env.PORT
@@ -53,6 +98,7 @@ const USER = {
   pass: process.env.AUTH_PASS,
 }
 const app = express()
+const time = () => new Date().toISOString()
 
 app.use((req, res, next) => {
   const start = performance.now();
@@ -73,7 +119,7 @@ app.use((req, res, next) => {
   }
   res.on('finish', () => {
     const duration = (performance.now() - start).toFixed(3);
-    console.log('[HTTP]', method, url, res.statusCode, `${bytes}B`, '-', ua, `+${duration}ms`)
+    console.log(time(), '[HTTP]', method, url, res.statusCode, `${bytes}B`, '-', ua, `+${duration}ms`)
   })
   next()
 })
@@ -90,6 +136,9 @@ app.use((req, res, next) => {
 })
 app.use(express.json({ limit: '1Mb' }))
 
+app.use('/docs', swaggerUi.serve)
+app.get('/docs', swaggerUi.setup(swaggerDocument))
+
 app.post('/api/subscribe', async (req, res) => {
   const { topic, tokens } = req.body;
   const result = await admin.messaging().subscribeToTopic(tokens, topic)
@@ -100,22 +149,22 @@ app.post('/api/unsubscribe', async (req, res) => {
   const result = await admin.messaging().unsubscribeFromTopic(tokens, topic)
   res.json(result)
 })
-app.post('/api/send-to-topic', async (req, res) => {
-  const { topic, message, dryRun } = req.body;
-  const result = await admin.messaging().sendToTopic(topic, message, dryRun)
-  res.json(result)
-})
 app.post('/api/send', async (req, res) => {
-  const { message, dryRun } = req.body;
+  const { message } = req.body;
+  const dryRun = toBoolean(req.query.dry_run);
   const result = await admin.messaging().send(message, dryRun)
   res.json(result)
 })
 app.post('/api/send-each', async (req, res) => {
-  const { tokens, message, dryRun } = req.body;
+  const { tokens, message } = req.body;
+  const dryRun = toBoolean(req.query.dry_run);
   const result = await admin.messaging().sendEach(tokens, message, dryRun)
   res.json(result)
 })
 
 const server = http.createServer(app)
+server.on('error', (e) => {
+  console.log(time(), '[ERROR]', e)
+})
 
-server.listen(port, 'localhost', () => console.log('server listening port', server.address().port))
+server.listen(port, 'localhost', () => console.log(time(), 'server listening port', server.address().port))

@@ -1,0 +1,21 @@
+services:
+  mysignal-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mysignal-api
+    container_name: mysignal-api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - PORT=80
+      - AUTH_USER=$AUTH_USER
+      - AUTH_PASS=$AUTH_PASS
+      - FIREBASE_SERVICE_ACCOUNT_JSON=$FIREBASE_SERVICE_ACCOUNT_JSON
+      - HUAWEI_CONFIG_JSON=$HUAWEI_CONFIG_JSON
+    ports:
+      - "8011:80"
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: node src/server.js
