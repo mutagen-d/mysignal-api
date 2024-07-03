@@ -17,5 +17,8 @@ services:
       - "8011:80"
     volumes:
       - .:/app
+      - notused:/app/node_modules
     working_dir: /app
     command: node src/main.js
+volumes:
+  notused:
