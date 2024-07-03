@@ -18,4 +18,4 @@ services:
     volumes:
       - .:/app
     working_dir: /app
-    command: node src/server.js
+    command: node src/main.js

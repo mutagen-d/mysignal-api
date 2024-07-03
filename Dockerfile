@@ -1,11 +1,13 @@
-FROM node:20-alpine3.16
+FROM node:20-alpine
+
+USER node
 
 WORKDIR /app
 
-COPY package.json package.json
+COPY --chown=node:node package.json package.json
 
-RUN npm install
+RUN npm install && npm cache clean --force
 
-COPY . .
+COPY --chown=node:node . .
 
-CMD [ "node", "src/server.js" ]
+CMD [ "node", "src/main.js" ]

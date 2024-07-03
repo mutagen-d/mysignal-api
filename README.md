@@ -12,7 +12,7 @@
 - start server
   ```bash
   # direct
-  node src/server.js
+  node src/main.js
 
   # with docker
   docker build -t mysignal-api .
