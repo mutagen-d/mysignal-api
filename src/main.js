@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 const fs = require('fs')
 require('dotenv').config()
 const { admin, server } = require('./server')

@@ -2,6 +2,7 @@
   "name": "mysignal-api",
   "version": "0.2.4",
   "description": "Firebase and Huawei Cloud Messaging API proxy",
+  "bin": "src/main.js",
   "main": "src/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
