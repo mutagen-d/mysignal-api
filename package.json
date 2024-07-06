@@ -1,6 +1,6 @@
 {
   "name": "mysignal-api",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Firebase and Huawei Cloud Messaging API proxy",
   "bin": "src/main.js",
   "main": "src/server.js",
